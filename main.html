@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nooth Clubs</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #ffffff;
+    }
+    .slides-container {
+      background-color: #f1f3f4;
+      padding: 32px 0;
+    }
+    .schedule-section {
+      overflow-x: auto;
+      white-space: nowrap;
+      padding: 16px 0;
+    }
+    .club-card {
+      display: inline-block;
+      background-color: #ffffff;
+      box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+      border-radius: 8px;
+      padding: 24px;
+      margin-right: 24px;
+      width: 350px;
+      white-space: normal;
+    }
+    .hidden { display: none; }
+  </style>
+</head>
+<body class="text-lg">
+  <!-- Title Section -->
+  <div class="container mx-auto flex justify-start py-12 mb-8">
+    <h1 class="text-5xl font-bold text-[#4285F4]">Nooth Clubs</h1>
+  </div>
+  
+  <!-- Schedule Sections -->
+  <div class="container mx-auto mb-8">
+    <h2 class="text-3xl font-bold text-[#5F6368] mb-4">Today</h2>
+  </div>
+  
+  <div class="slides-container mb-12">
+    <div class="container mx-auto">
+      <div id="today" class="schedule-section"></div>
+    </div>
+  </div>
+  
+  <div class="container mx-auto mb-8">
+    <h2 class="text-3xl font-bold text-[#5F6368] mb-4">Tomorrow</h2>
+  </div>
+  
+  <div class="slides-container mb-12">
+    <div class="container mx-auto">
+      <div id="tomorrow" class="schedule-section"></div>
+    </div>
+  </div>
+  
+  <div class="container mx-auto mb-8">
+    <h2 class="text-3xl font-bold text-[#5F6368] mb-4">Later This Week</h2>
+  </div>
+  
+  <div class="slides-container mb-12">
+    <div class="container mx-auto">
+      <div id="laterThisWeek" class="schedule-section"></div>
+    </div>
+  </div>
+
+  <!-- Hidden Table with Data -->
+  <table class="hidden" id="clubData">
+    <tr>
+      <th>Club Name</th>
+      <th>Schedule</th>
+      <th>Date</th>
+      <th>Location</th>
+    </tr>
+    <tr>
+      <td>Kickboxing</td>
+      <td>4:00 PM - 6:00 PM</td>
+      <td>2024-09-25</td>
+      <td>Room 101</td>
+    </tr>
+    <tr>
+      <td>Coding Club</td>
+      <td>5:00 PM - 7:00 PM</td>
+      <td>2024-09-26</td>
+      <td>Room 202</td>
+    </tr>
+    <tr>
+      <td>Photography Club</td>
+      <td>3:00 PM - 5:00 PM</td>
+      <td>2024-09-27</td>
+      <td>Room 203</td>
+    </tr>
+    <!-- Add more rows as needed -->
+  </table>
+  
+  <script>
+    function generateClubCards() {
+      const todaySection = document.getElementById('today');
+      const tomorrowSection = document.getElementById('tomorrow');
+      const laterThisWeekSection = document.getElementById('laterThisWeek');
+      const table = document.getElementById('clubData');
+      const todayDate = new Date().toISOString().split('T')[0];
+      const tomorrowDate = new Date(Date.now() + 86400000).toISOString().split('T')[0]; // Adds 1 day
+      
+      for (let i = 1; i < table.rows.length; i++) {
+        const row = table.rows[i];
+        const clubName = row.cells[0].innerText;
+        const schedule = row.cells[1].innerText;
+        const clubDate = row.cells[2].innerText;
+        const location = row.cells[3].innerText;
+        
+        // Create a card for each club
+        const card = document.createElement('div');
+        card.classList.add('club-card');
+        card.innerHTML = `
+          <h3 class="text-2xl font-medium text-[#4285F4] mb-3">${clubName}</h3>
+          <p class="text-xl text-[#3C4043] mb-2">${schedule}</p>
+          <p class="text-lg text-[#5F6368]">${location}</p>
+        `;
+        
+        // Categorize based on date
+        if (clubDate === todayDate) {
+          todaySection.appendChild(card);
+        } else if (clubDate === tomorrowDate) {
+          tomorrowSection.appendChild(card);
+        } else {
+          laterThisWeekSection.appendChild(card);
+        }
+      }
+    }
+    
+    // Call the function to generate the cards
+    window.onload = generateClubCards;
+  </script>
+</body>
+</html>
