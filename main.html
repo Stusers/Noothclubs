@@ -10,36 +10,46 @@
     body {
       font-family: 'Roboto', sans-serif;
       background-color: #ffffff;
+      opacity: 0;
+      transition: opacity 1s ease-in-out;
     }
     .slides-container {
       background-color: #f1f3f4;
       padding: 32px 0;
     }
     .schedule-section {
+      display: flex;
       overflow-x: auto;
-      white-space: nowrap;
       padding: 16px 0;
     }
     .club-card {
-      display: inline-block;
       background-color: #ffffff;
       box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
       border-radius: 8px;
       padding: 24px;
       margin-right: 24px;
       width: 350px;
-      white-space: normal;
+      flex-shrink: 0;
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.8);
+      transition: all 0.5s ease-out;
+      position: fixed;
+      top: 50%;
+      left: 50%;
     }
-    .hidden { display: none; }
+    .club-card.animated {
+      opacity: 1;
+      transform: translate(0, 0) scale(1);
+      position: static;
+    }
   </style>
 </head>
 <body class="text-lg">
-  <!-- Title Section -->
-  <div class="container mx-auto flex justify-start py-12 mb-8">
-    <h1 class="text-5xl font-bold text-[#4285F4]">Nooth Clubs</h1>
+  <div class="container mx-auto flex justify-between items-center py-12 mb-8">
+    <img src="logo.png" alt="Nooth Clubs Logo" class="h-42" width="auto"> 
+    <div id="currentDateTime" class="text-2xl text-[#5F6368]"></div>
   </div>
   
-  <!-- Schedule Sections -->
   <div class="container mx-auto mb-8">
     <h2 class="text-3xl font-bold text-[#5F6368] mb-4">Today</h2>
   </div>
@@ -69,74 +79,94 @@
       <div id="laterThisWeek" class="schedule-section"></div>
     </div>
   </div>
-
-  <!-- Hidden Table with Data -->
-  <table class="hidden" id="clubData">
-    <tr>
-      <th>Club Name</th>
-      <th>Schedule</th>
-      <th>Date</th>
-      <th>Location</th>
-    </tr>
-    <tr>
-      <td>Kickboxing</td>
-      <td>4:00 PM - 6:00 PM</td>
-      <td>2024-09-25</td>
-      <td>Room 101</td>
-    </tr>
-    <tr>
-      <td>Coding Club</td>
-      <td>5:00 PM - 7:00 PM</td>
-      <td>2024-09-26</td>
-      <td>Room 202</td>
-    </tr>
-    <tr>
-      <td>Photography Club</td>
-      <td>3:00 PM - 5:00 PM</td>
-      <td>2024-09-27</td>
-      <td>Room 203</td>
-    </tr>
-    <!-- Add more rows as needed -->
-  </table>
-  
   <script>
-    function generateClubCards() {
-      const todaySection = document.getElementById('today');
-      const tomorrowSection = document.getElementById('tomorrow');
-      const laterThisWeekSection = document.getElementById('laterThisWeek');
-      const table = document.getElementById('clubData');
-      const todayDate = new Date().toISOString().split('T')[0];
-      const tomorrowDate = new Date(Date.now() + 86400000).toISOString().split('T')[0]; // Adds 1 day
-      
-      for (let i = 1; i < table.rows.length; i++) {
-        const row = table.rows[i];
-        const clubName = row.cells[0].innerText;
-        const schedule = row.cells[1].innerText;
-        const clubDate = row.cells[2].innerText;
-        const location = row.cells[3].innerText;
-        
-        // Create a card for each club
-        const card = document.createElement('div');
-        card.classList.add('club-card');
-        card.innerHTML = `
-          <h3 class="text-2xl font-medium text-[#4285F4] mb-3">${clubName}</h3>
-          <p class="text-xl text-[#3C4043] mb-2">${schedule}</p>
-          <p class="text-lg text-[#5F6368]">${location}</p>
-        `;
-        
-        // Categorize based on date
-        if (clubDate === todayDate) {
-          todaySection.appendChild(card);
-        } else if (clubDate === tomorrowDate) {
-          tomorrowSection.appendChild(card);
-        } else {
-          laterThisWeekSection.appendChild(card);
-        }
+     const clubData = [
+      { 
+        name: "Kickboxing", 
+        occurrences: [
+          { schedule: "4:00 PM - 6:00 PM", day: 1, location: "Room 101" },
+          { schedule: "4:00 PM - 6:00 PM", day: 3, location: "Room 101" }
+        ]
+      },
+      { 
+        name: "Coding Club", 
+        occurrences: [
+          { schedule: "5:00 PM - 7:00 PM", day: 2, location: "Room 202" },
+          { schedule: "5:00 PM - 7:00 PM", day: 4, location: "Room 202" }
+        ]
+      },
+      { 
+        name: "Photography Club", 
+        occurrences: [
+          { schedule: "3:00 PM - 5:00 PM", day: 5, location: "Room 203" }
+        ]
       }
+    ];
+
+    function updateDateTime() {
+      const now = new Date();
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+      document.getElementById('currentDateTime').textContent = now.toLocaleDateString('en-US', options);
     }
-    
-    // Call the function to generate the cards
-    window.onload = generateClubCards;
+
+    function createClubCard(club, occurrence) {
+      const card = document.createElement('div');
+      card.classList.add('club-card');
+      card.innerHTML = `
+        <h3 class="text-2xl font-medium text-[#4285F4] mb-3">${club.name}</h3>
+        <p class="text-xl text-[#3C4043] mb-2">${occurrence.schedule}</p>
+        <p class="text-lg text-[#5F6368]">${occurrence.location}</p>
+      `;
+      return card;
+    }
+
+    function generateClubCards() {
+      const today = new Date().getDay();
+      const tomorrow = (today + 1) % 7;
+      const cards = [];
+      
+      clubData.forEach(club => {
+        club.occurrences.forEach(occurrence => {
+          const card = createClubCard(club, occurrence);
+          cards.push(card);
+          if (occurrence.day === today) {
+            document.getElementById('today').appendChild(card);
+          } else if (occurrence.day === tomorrow) {
+            document.getElementById('tomorrow').appendChild(card);
+          } else {
+            document.getElementById('laterThisWeek').appendChild(card);
+          }
+        });
+      });
+
+      return cards;
+    }
+
+    function animateCards(cards) {
+      cards.forEach((card, index) => {
+        setTimeout(() => {
+          card.classList.add('animated');
+        }, index * 100); // Stagger the animations
+      });
+    }
+
+    function init() {
+      updateDateTime();
+      setInterval(updateDateTime, 60000);
+      const cards = generateClubCards();
+      
+      // Fade in the body
+      setTimeout(() => {
+        document.body.style.opacity = '1';
+      }, 100);
+
+      // Animate cards after a short delay
+      setTimeout(() => {
+        animateCards(cards);
+      }, 500);
+    }
+
+    window.onload = init;
   </script>
 </body>
 </html>
