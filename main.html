@@ -3,18 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nooth Clubs</title>
+  <title>Nooth Clubs - Events</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="papaparse.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
     body {
       font-family: 'Roboto', sans-serif;
-      background-color: #ffffff;
-      opacity: 0;
+      background-color: #15478C;
+      color: #FFFFFF;
       transition: opacity 1s ease-in-out;
     }
     .slides-container {
-      background-color: #f1f3f4;
+      background-color: #008B9E;
       padding: 32px 0;
     }
     .schedule-section {
@@ -24,146 +25,180 @@
     }
     .club-card {
       background-color: #ffffff;
+      color: #15478C;
       box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
       border-radius: 8px;
-      padding: 24px;
-      margin-right: 24px;
-      width: 350px;
+      padding: 16px;
+      margin-right: 16px;
+      width: 280px;
       flex-shrink: 0;
-      opacity: 0;
-      transform: translate(-50%, -50%) scale(0.8);
+      opacity: 1;
+      transform: translateY(0) scale(1);
       transition: all 0.5s ease-out;
-      position: fixed;
-      top: 50%;
-      left: 50%;
+      position: relative;
     }
     .club-card.animated {
       opacity: 1;
-      transform: translate(0, 0) scale(1);
-      position: static;
+      transform: translateY(0) scale(1);
+    }
+    .in-progress {
+      background-color: #C5413F;
+      color: #FFFFFF;
+      font-weight: bold;
+      padding: 4px 8px;
+      border-radius: 4px;
+      position: absolute;
+      top: 8px;
+      right: 8px;
+    }
+    @media (max-width: 768px) {
+      .club-card {
+        width: 100%;
+        margin-right: 8px;
+        padding: 12px;
+      }
+      .schedule-section {
+        flex-direction: column;
+        overflow-x: visible;
+      }
     }
   </style>
 </head>
 <body class="text-lg">
-  <div class="container mx-auto flex justify-between items-center py-12 mb-8">
-    <img src="logo.png" alt="Nooth Clubs Logo" class="h-42" width="auto"> 
-    <div id="currentDateTime" class="text-2xl text-[#5F6368]"></div>
+  <div class="container mx-auto flex justify-between items-center py-8 mb-4">
+    <img src="logo.png" alt="Nooth Clubs Logo" class="h-12" width="auto">
+    <div id="currentDateTime" class="text-2xl text-[#F5BD18]"></div>
   </div>
-  
   <div class="container mx-auto mb-8">
-    <h2 class="text-3xl font-bold text-[#5F6368] mb-4">Today</h2>
+    <h2 class="text-3xl font-bold text-[#F5BD18] mb-4">Today</h2>
   </div>
-  
   <div class="slides-container mb-12">
     <div class="container mx-auto">
       <div id="today" class="schedule-section"></div>
     </div>
   </div>
-  
   <div class="container mx-auto mb-8">
-    <h2 class="text-3xl font-bold text-[#5F6368] mb-4">Tomorrow</h2>
+    <h2 class="text-3xl font-bold text-[#F5BD18] mb-4">Tomorrow</h2>
   </div>
-  
   <div class="slides-container mb-12">
     <div class="container mx-auto">
       <div id="tomorrow" class="schedule-section"></div>
     </div>
   </div>
-  
   <div class="container mx-auto mb-8">
-    <h2 class="text-3xl font-bold text-[#5F6368] mb-4">Later This Week</h2>
+    <h2 class="text-3xl font-bold text-[#F5BD18] mb-4">Later This Week</h2>
   </div>
-  
   <div class="slides-container mb-12">
     <div class="container mx-auto">
       <div id="laterThisWeek" class="schedule-section"></div>
     </div>
   </div>
   <script>
-     const clubData = [
-      { 
-        name: "Kickboxing", 
-        occurrences: [
-          { schedule: "4:00 PM - 6:00 PM", day: 1, location: "Room 101" },
-          { schedule: "4:00 PM - 6:00 PM", day: 3, location: "Room 101" }
-        ]
-      },
-      { 
-        name: "Coding Club", 
-        occurrences: [
-          { schedule: "5:00 PM - 7:00 PM", day: 2, location: "Room 202" },
-          { schedule: "5:00 PM - 7:00 PM", day: 4, location: "Room 202" }
-        ]
-      },
-      { 
-        name: "Photography Club", 
-        occurrences: [
-          { schedule: "3:00 PM - 5:00 PM", day: 5, location: "Room 203" }
-        ]
-      }
-    ];
-
     function updateDateTime() {
       const now = new Date();
-      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+      const options = {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'Europe/Dublin'
+      };
       document.getElementById('currentDateTime').textContent = now.toLocaleDateString('en-US', options);
     }
 
-    function createClubCard(club, occurrence) {
+    function createClubCard(event, isInProgress) {
+      event.summary = event.summary.replace('[Physical Activity] MU Life', '').trim();
       const card = document.createElement('div');
       card.classList.add('club-card');
       card.innerHTML = `
-        <h3 class="text-2xl font-medium text-[#4285F4] mb-3">${club.name}</h3>
-        <p class="text-xl text-[#3C4043] mb-2">${occurrence.schedule}</p>
-        <p class="text-lg text-[#5F6368]">${occurrence.location}</p>
+        <h3 class="text-2xl font-medium text-[#15478C] mb-3">${event.summary}</h3>
+        <p class="text-lg font-semibold text-[#15478C] mb-1">${new Date(event.dtstart).toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+        <p class="text-xl text-[#3C4043] mb-2">${new Date(event.dtstart).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${new Date(event.dtend).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+        <p class="text-lg text-[#5F6368]">${event.location}</p>
       `;
+      if (isInProgress) {
+        const inProgressLabel = document.createElement('span');
+        inProgressLabel.classList.add('in-progress');
+        inProgressLabel.innerText = "In Progress";
+        card.appendChild(inProgressLabel);
+      }
       return card;
     }
 
-    function generateClubCards() {
-      const today = new Date().getDay();
-      const tomorrow = (today + 1) % 7;
-      const cards = [];
+    function generateClubCards(events) {
+      const now = new Date();
+      const uniqueEventKeys = new Set();
+      const uniqueEvents = events.filter(event => {
+        const dayKey = `${new Date(event.dtstart).toDateString()}`;
+        const key = `${event.dtstart}-${event.dtend}-${event.location}-${event.summary}`;
+        if (uniqueEventKeys.has(key + dayKey)) {
+          return false;
+        } else {
+          uniqueEventKeys.add(key + dayKey);
+          return true;
+        }
+      });
       
-      clubData.forEach(club => {
-        club.occurrences.forEach(occurrence => {
-          const card = createClubCard(club, occurrence);
-          cards.push(card);
-          if (occurrence.day === today) {
+      uniqueEvents.sort((a, b) => {
+        const dateComparison = new Date(a.dtstart) - new Date(b.dtstart);
+        if (dateComparison !== 0) {
+          return dateComparison;
+        }
+        return a.summary.localeCompare(b.summary);
+      }).forEach(event => {
+        const startTime = new Date(event.dtstart);
+        const endTime = new Date(event.dtend);
+        const isInProgress = now >= startTime && now <= endTime;
+
+        // Get the current week's start and end (Sunday to Saturday)
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - now.getDay());
+        startOfWeek.setHours(0, 0, 0, 0);
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+        endOfWeek.setHours(23, 59, 59, 999);
+
+        // Only display events happening this week
+        if (startTime >= startOfWeek && startTime <= endOfWeek) {
+          const card = createClubCard(event, isInProgress);
+          if (startTime.getDay() === now.getDay()) {
             document.getElementById('today').appendChild(card);
-          } else if (occurrence.day === tomorrow) {
+          } else if (startTime.getDay() === (now.getDay() + 1) % 7) {
             document.getElementById('tomorrow').appendChild(card);
           } else {
             document.getElementById('laterThisWeek').appendChild(card);
           }
-        });
+        }
       });
-
-      return cards;
     }
 
-    function animateCards(cards) {
-      cards.forEach((card, index) => {
-        setTimeout(() => {
-          card.classList.add('animated');
-        }, index * 100); // Stagger the animations
+    function fetchCSVData() {
+      Papa.parse('events.csv', {
+        download: true,
+        header: true,
+        complete: function(results) {
+          const events = results.data.map(event => {
+            return {
+              dtstart: new Date(event.dtstart),
+              dtend: new Date(event.dtend),
+              location: event.location,
+              summary: event.summary
+            };
+          });
+          generateClubCards(events);
+        },
+        error: function(error) {
+          console.error('Error fetching CSV data:', error);
+        }
       });
     }
 
     function init() {
       updateDateTime();
       setInterval(updateDateTime, 60000);
-      const cards = generateClubCards();
-      
-      // Fade in the body
-      setTimeout(() => {
-        document.body.style.opacity = '1';
-      }, 100);
-
-      // Animate cards after a short delay
-      setTimeout(() => {
-        animateCards(cards);
-      }, 500);
+      fetchCSVData();
     }
 
     window.onload = init;
